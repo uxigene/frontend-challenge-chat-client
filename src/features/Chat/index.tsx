@@ -11,13 +11,17 @@ import Message from './components/Message';
 import Scrollable from './components/Scrollable';
 
 import useMessages from './hooks/useMessages.ts';
+import useInterval from '../../hooks/useInterval.ts';
+
+const POLLING_INTERVAL = 3000;
 
 type TypeChatProps = {
 	nickname: string;
 };
 
 const Chat: FC<TypeChatProps> = ({ nickname }: TypeChatProps) => {
-	const { messages, loading, hasMore, sendMessage, loadInitMessages, loadMoreMessages } = useMessages();
+	const { messages, loading, hasMore, sendMessage, loadNewMessages, loadInitMessages, loadMoreMessages } =
+		useMessages();
 
 	const handleFormSubmit = async (text: string) => {
 		await sendMessage({ author: nickname, message: text });
@@ -26,6 +30,10 @@ const Chat: FC<TypeChatProps> = ({ nickname }: TypeChatProps) => {
 	useEffect(() => {
 		loadInitMessages().then();
 	}, [loadInitMessages]);
+
+	useInterval(() => {
+		loadNewMessages().then();
+	}, POLLING_INTERVAL);
 
 	return (
 		<div className="flex flex-col h-dvh overflow-hidden">

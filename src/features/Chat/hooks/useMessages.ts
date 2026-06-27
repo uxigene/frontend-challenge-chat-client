@@ -1,70 +1,71 @@
 import { useState, useCallback } from 'react';
 
 import type { TypeMessage, TypeMessages } from '../types/messages.ts';
-
-const INITIAL_MESSAGES_MOCK: TypeMessages = [
-	{
-		_id: '1',
-		message: 'Hey team! I created a Doodle poll for our monthly team lunch 🍕',
-		author: 'Luka',
-		createdAt: new Date().toISOString(),
-	},
-	{
-		_id: '2',
-		message: 'Cool! It&#39;s super easy to vote.',
-		author: 'John',
-		createdAt: new Date().toISOString(),
-	},
-	{
-		_id: '3',
-		message: 'Could everyone vote by tomorrow? Then we can lock in the restaurant reservation.',
-		author: 'Luka',
-		createdAt: new Date().toISOString(),
-	},
-	{
-		_id: '4',
-		message: "Done! Love how it shows everyone's availability at a glance.",
-		author: 'Maddie',
-		createdAt: new Date().toISOString(),
-	},
-	{
-		_id: '5',
-		message: "Just submitted my preferences. Can't wait for the lunch! 😋",
-		author: 'Nina',
-		createdAt: new Date().toISOString(),
-	},
-];
+import { loadMessagesService, sendMessageService } from '../services/messages.ts';
 
 const LIMIT = 50;
 
 const useMessages = () => {
-	const [messages, setMessages] = useState<TypeMessages>([]);
 	const [loading, setLoading] = useState<boolean>(false);
-	const [hasMore, setHasMore] = useState<boolean>(true);
+	const [hasMore, setHasMore] = useState<boolean>(false);
+
+	const [messages, setMessages] = useState<TypeMessages>([]);
 
 	const loadInitMessages = useCallback(async () => {
-		setLoading(true);
-		setTimeout(() => {
-			setMessages(INITIAL_MESSAGES_MOCK);
-			setHasMore(INITIAL_MESSAGES_MOCK.length >= LIMIT);
+		try {
+			setLoading(true);
+
+			const response = await loadMessagesService({
+				before: new Date().toISOString(),
+				limit: LIMIT,
+			});
+
+			setHasMore(response.length === LIMIT);
+			setMessages(response);
+		} catch (error) {
+			console.log(error);
+		} finally {
 			setLoading(false);
-		}, 1000);
+		}
 	}, []);
 
 	const loadMoreMessages = useCallback(async () => {
-		setLoading(true);
-		setTimeout(() => {
+		try {
+			setLoading(true);
+
+			const oldestMessage = messages[0];
+			const response = await loadMessagesService({
+				before: oldestMessage.createdAt,
+				limit: LIMIT,
+			});
+
+			setHasMore(response.length === LIMIT);
+			setMessages((prev) => [...response, ...prev]);
+		} catch (error) {
+			console.log(error);
+		} finally {
 			setLoading(false);
-		}, 1000);
-	}, []);
+		}
+	}, [messages]);
+
+	const loadNewMessages = useCallback(async () => {
+		try {
+			const newestMessage = messages[messages.length - 1];
+			const response = await loadMessagesService({ after: newestMessage.createdAt, limit: LIMIT });
+
+			setMessages((prev) => [...prev, ...response]);
+		} catch (error) {
+			console.log(error);
+		}
+	}, [messages]);
 
 	const sendMessage = useCallback(async (message: Partial<TypeMessage>) => {
-		const mock: TypeMessage = {
-			_id: new Date().toISOString(),
-			createdAt: new Date().toISOString(),
-			...message,
-		} as TypeMessage;
-		setMessages((prev: TypeMessages) => [...prev, mock]);
+		try {
+			const response = await sendMessageService(message);
+			setMessages((prev) => [...prev, response]);
+		} catch (error) {
+			console.log(error);
+		}
 	}, []);
 
 	return {
@@ -72,6 +73,7 @@ const useMessages = () => {
 		messages,
 		hasMore,
 		sendMessage,
+		loadNewMessages,
 		loadInitMessages,
 		loadMoreMessages,
 	};
