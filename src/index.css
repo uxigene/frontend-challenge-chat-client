@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+
+}
+
+html, body, #root {
+    height: 100dvh;
+}
+
+body {
+    background: url("/background.png") repeat center center;
+}
+
+
