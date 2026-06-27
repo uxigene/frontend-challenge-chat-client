@@ -1,3 +1,4 @@
+import Chat from './features/Chat';
 import Login from './features/Login';
 
 import useLocalStorage from './hooks/useLocalstorage.ts';
@@ -9,7 +10,7 @@ function App() {
 		return <Login onLogin={setNickname} />;
 	}
 
-	return null;
+	return <Chat nickname={nickname} />;
 }
 
 export default App;
