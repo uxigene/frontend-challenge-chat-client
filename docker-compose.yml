@@ -1,0 +1,9 @@
+services:
+  chat-client:
+    build:
+      context: .
+    image: frontend-challenge-chat-client
+    container_name: frontend-challenge-chat-client
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
